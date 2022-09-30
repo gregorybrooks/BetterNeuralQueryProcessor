@@ -18,6 +18,7 @@ public class BetterNeuralQueryProcessor {
     private String corpusFileLocation;
     private String targetCorpusFileName;
     private String runFileLocation;
+    private TranslatorInterface translator;
 
     BetterNeuralQueryProcessor(String analyticTasksFile, String mode, String programDirectory, String logFileLocation,
                                String corpusFileLocation, String targetCorpusFileName, String runFileLocation) {
@@ -149,8 +150,9 @@ public class BetterNeuralQueryProcessor {
             Set sentenceSet = t.getExampleDocSentences();
             sentenceSet.addAll(r.getExampleDocSentences());
             List<String> sentences = new ArrayList<>(sentenceSet);
+            List<String> translatedSentences = translator.getTranslations(sentences);
 
-            List<String> hits = index.runQuery(sentences);
+            List<String> hits = index.runQuery(translatedSentences);
 
             int rank = 1;
             for (String hit : hits) {
@@ -167,6 +169,9 @@ public class BetterNeuralQueryProcessor {
 
     private void processQueries() {
         try {
+            // device should be either "cpu" or "cuda:0"
+            translator = new MarianTranslator(programDirectory, "ARABIC", "cpu");
+
             EmbeddingsIndex index = new EmbeddingsIndex(programDirectory, corpusFileLocation, targetCorpusFileName);
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(
                     new FileOutputStream(runFileLocation + "/"+ mode + ".neural.out")));
@@ -176,7 +181,9 @@ public class BetterNeuralQueryProcessor {
             // those sentences. Get back the docids and scores, write them to the output runfile
             for (Task t : tasks) {
                 for (Request r : t.getRequests()) {
-                    executeQuery(t, r, index, writer);
+                    if (r.reqNum.equals("IR-T3-r2")) {
+                        executeQuery(t, r, index, writer);
+                    }
                 }
             }
             writer.close();

@@ -28,6 +28,9 @@ with open(dir + '/embeddings.index') as json_file:
         x = np.asarray(embedding_as_list)
         index2[id] = x
 
+print('READY')
+sys.stdout.flush()
+
 ranking = {}
 lines = []
 while True:
@@ -39,15 +42,18 @@ while True:
                 candidate_similarity_scores = cosine_similarity(example, value)
                 candidate_score = get_score(candidate_similarity_scores)
                 if candidate_score > 0.0:
-                    ranking[key] = candidate_score
-            cnt = 1
+                    if len(ranking) < 1000:
+                        ranking[key] = candidate_score
+                    else:
+                        old_min_key = min(ranking, key=ranking.get)
+                        old_min_value = ranking[old_min_key]
+                        if candidate_score > old_min_value:
+                            ranking[key] = candidate_score
+                            del ranking[old_min_key]
             for key, value in sorted(ranking.items(),
                                      key=lambda item: item[1],
                                      reverse=True):
                 print(key, value)
-                cnt += 1
-                if cnt > 1000:
-                    break
             print('EOL')
             sys.stdout.flush()
             lines.clear()

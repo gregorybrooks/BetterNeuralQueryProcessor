@@ -11,27 +11,18 @@ public class LineOrientedPythonDaemon {
     private  BufferedReader sentenceCalledProcessStdout = null;
 
     LineOrientedPythonDaemon(String programDirectory, String programName) {
-        try {
-            System.out.println("Starting " + programDirectory + programName);
-            sentenceProcessBuilder = new ProcessBuilder("python3",
-                    programDirectory + programName);
-            sentenceProcessBuilder.directory(new File(programDirectory));
-            sentenceProcess = sentenceProcessBuilder.start();
-
-            sentenceCalledProcessStdin = new BufferedWriter(
-                    new OutputStreamWriter(sentenceProcess.getOutputStream()));
-            sentenceCalledProcessStdout = new BufferedReader(
-                    new InputStreamReader(sentenceProcess.getInputStream()));
-        } catch (Exception e) {
-            throw new BetterQueryBuilderException(e);
-        }
+            this(programDirectory, programName, "", "");
     }
 
-    LineOrientedPythonDaemon(String programDirectory, String programName, String parameter) {
+    LineOrientedPythonDaemon(String programDirectory, String programName, String parameter1) {
+        this(programDirectory, programName, parameter1, "");
+    }
+
+    LineOrientedPythonDaemon(String programDirectory, String programName, String parameter1, String parameter2) {
         try {
-            System.out.println("Starting " + programDirectory + programName + " " + parameter);
+            System.out.println("Starting " + programDirectory + programName + " " + parameter1 + " " + parameter2);
             sentenceProcessBuilder = new ProcessBuilder("python3",
-                    programDirectory + programName, parameter);
+                    programDirectory + programName, parameter1, parameter2);
             sentenceProcessBuilder.directory(new File(programDirectory));
             sentenceProcess = sentenceProcessBuilder.start();
 
@@ -39,6 +30,16 @@ public class LineOrientedPythonDaemon {
                     new OutputStreamWriter(sentenceProcess.getOutputStream()));
             sentenceCalledProcessStdout = new BufferedReader(
                     new InputStreamReader(sentenceProcess.getInputStream()));
+
+            System.out.println("Waiting for daemon to be READY");
+            String line;
+            while ((line = sentenceCalledProcessStdout.readLine()) != null) {
+                if (line.equals("READY")) {
+                    break;
+                }
+            }
+            System.out.println("Daemon is READY");
+
         } catch (Exception e) {
             throw new BetterQueryBuilderException(e);
         }
